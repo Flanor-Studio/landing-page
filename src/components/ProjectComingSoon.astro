@@ -1,0 +1,12 @@
+---
+interface Props {
+  inDialog?: boolean;
+}
+
+const { inDialog = false } = Astro.props;
+---
+
+<div class="project-art project-coming-soon" data-theme="tile" data-project-coming-soon={inDialog ? '' : undefined} hidden={inDialog}>
+  <div class="coming-soon-tiles" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></div>
+  <p>به‌زودی</p>
+</div>

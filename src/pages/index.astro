@@ -1,0 +1,220 @@
+---
+import '@fontsource-variable/space-grotesk';
+import '../styles/site.css';
+import ProjectComingSoon from '../components/ProjectComingSoon.astro';
+import ProjectLinks from '../components/ProjectLinks.astro';
+import { projects } from '../projects';
+
+const base = import.meta.env.BASE_URL.replace(/\/?$/, '/');
+const description = 'با یک پیکان در جزیرهٔ فلانور رانندگی کنید و بازی‌های استودیو را پیدا کنید.';
+---
+
+<!doctype html>
+<html lang="fa" dir="rtl">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#32233e" />
+    <meta name="description" content={description} />
+    <link rel="icon" href={`${base}flanor.png`} type="image/png" />
+    <title>جزیرهٔ فلانور | Flanor Studio</title>
+    <noscript><style>.stage { display: none; } .fallback { display: block !important; }</style></noscript>
+  </head>
+  <body>
+    <main>
+      <section class="stage" id="island" aria-label="جزیرهٔ فلانور" tabindex="-1" data-world="loading"
+        style={`--island-poster: url("${base}island.webp")`}>
+        <div class="game-view" aria-hidden="true"><canvas data-world-canvas></canvas></div>
+        <div class="game-edge" aria-hidden="true"></div>
+
+        <header class="topbar">
+          <a class="brand" href="#island" data-home aria-label="فلانور استودیو، خانه" dir="ltr">
+            <img src={`${base}flanor.png`} width="46" height="46" alt="" />
+            <strong>FLANOR<small>STUDIO</small></strong>
+          </a>
+          <div class="top-actions">
+            <button class="hud-button" type="button" data-open="map" aria-haspopup="dialog">
+              <i class="icon icon-map" aria-hidden="true"></i><span>نقشه</span><kbd>M</kbd>
+            </button>
+            <button class="hud-button" type="button" data-open="guide" aria-haspopup="dialog">
+              <i class="icon icon-menu" aria-hidden="true"></i><span>راهنما</span>
+            </button>
+          </div>
+        </header>
+
+        <section class="welcome" data-welcome aria-labelledby="island-title">
+          <div class="welcome-copy">
+            <h1 id="island-title">جزیرهٔ فلانور</h1>
+            <p>با پیکان دور بزن و بازی‌های ما را کشف کن.</p>
+          </div>
+          <div class="welcome-actions">
+            <button class="drive-start" type="button" data-start disabled>در حال بارگذاری…</button>
+            <a href="#projects" data-open="catalog">دیدن بازی‌ها</a>
+          </div>
+        </section>
+
+        <div class="station-labels" data-stations hidden>
+          {projects.map((project, index) => (
+            <button class="station-label" type="button" data-station={index}
+              style={`--station-color: ${project.color}`} aria-haspopup="dialog">
+              <i aria-hidden="true"></i>{project.name}
+            </button>
+          ))}
+        </div>
+
+        <div class="game-bottom" data-game-ui hidden>
+          <button type="button" class="mini-map" data-open="map" aria-haspopup="dialog" aria-label="باز کردن نقشهٔ جزیره">
+            <div class="mini-map-image">
+              <canvas data-mini-map width="300" height="225" aria-hidden="true"></canvas>
+              <span class="map-n" aria-hidden="true" dir="ltr">N</span>
+            </div>
+            <span class="mini-map-foot"><strong>نقشهٔ جزیره</strong><output data-count dir="ltr">۰ / ۳</output></span>
+          </button>
+
+          <div class="nearby" data-nearby hidden>
+            <button class="drive-start" type="button" data-visit><span data-nearby-label></span><kbd>E</kbd></button>
+          </div>
+
+          <div class="drive-hud">
+            <div class="keyboard-hint" aria-hidden="true">
+              <span class="drive-keys" dir="ltr"><kbd>↑</kbd><span><kbd>←</kbd><kbd>↓</kbd><kbd>→</kbd></span></span>
+              <span>رانندگی</span>
+            </div>
+            <div class="speed" dir="ltr">
+              <div><output data-speed aria-live="off" aria-label="سرعت به کیلومتر بر ساعت">00</output><span>KM/H</span></div>
+              <span class="speed-bar" aria-hidden="true"></span>
+            </div>
+            <button type="button" class="reset-button" data-reset title="بازگشت به شروع و بازسازی (R)" aria-label="بازگشت به شروع و بازسازی">
+              <span aria-hidden="true">↻</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="touch-controls" data-touch hidden aria-label="فرمان‌های رانندگی">
+          <div class="touch-utilities">
+            <button type="button" data-drive="brake">ترمز</button>
+            <button type="button" data-drive="boost">شتاب</button>
+            <button type="button" data-drive="jump">پرش</button>
+          </div>
+          <div class="touch-row">
+            <button type="button" data-drive="left" aria-label="چپ">←</button>
+            <button type="button" data-drive="right" aria-label="راست">→</button>
+          </div>
+          <div class="touch-row">
+            <button type="button" data-drive="back" aria-label="دنده عقب">↓</button>
+            <button type="button" data-drive="forward" aria-label="گاز">↑</button>
+          </div>
+        </div>
+        <p class="sr-only" data-announcement role="status"></p>
+        <p class="world-error" data-world-error hidden>نمای سه‌بعدی در این مرورگر در دسترس نیست. بازی‌ها را می‌توانی از فهرست باز کنی.</p>
+      </section>
+
+      <section class="fallback" id="projects" aria-labelledby="fallback-title">
+        <h2 id="fallback-title">بازی‌های استودیو فلانور</h2>
+        <div class="fallback-grid">
+          {projects.map(project => (
+            <article style={`--station-color: ${project.color}`}>
+              <span class="project-dot" aria-hidden="true"></span>
+              <h3>{project.name}</h3>
+              {project.status === 'coming-soon' ? <ProjectComingSoon /> : (
+                <>
+                  <p class="english" lang="en" dir="ltr">{project.english}</p>
+                  <p>{project.description}</p>
+                  <ProjectLinks project={project} />
+                </>
+              )}
+            </article>
+          ))}
+        </div>
+      </section>
+    </main>
+
+    <dialog class="panel map-panel" data-panel="map" aria-labelledby="map-title">
+      <header class="panel-head">
+        <div><h2 id="map-title">نقشهٔ جزیره</h2><p>یک ایستگاه را انتخاب کن و به آنجا برو.</p></div>
+        <form method="dialog"><button class="close-button" aria-label="بستن" autofocus>×</button></form>
+      </header>
+      <div class="atlas" aria-hidden="true">
+        <canvas data-atlas width="768" height="500"></canvas><span class="map-n" dir="ltr">N</span>
+      </div>
+      <div class="panel-list">
+        {projects.map((project, index) => (
+          <button type="button" data-travel={index} style={`--station-color: ${project.color}`}>
+            <span class="project-dot" aria-hidden="true"></span><strong>{project.name}</strong><small>{project.stop}</small>
+          </button>
+        ))}
+      </div>
+    </dialog>
+
+    <dialog class="panel" data-panel="guide" aria-labelledby="guide-title">
+      <header class="panel-head">
+        <div><h2 id="guide-title">راهنمای رانندگی</h2><p>با پیکان از میان درخت‌ها، جعبه‌ها و وسایل جزیره بگذر. برای بازدید، کنار ساختمان‌ها توقف کن.</p></div>
+        <form method="dialog"><button class="close-button" aria-label="بستن" autofocus>×</button></form>
+      </header>
+      <dl class="controls-list">
+        <div><dt>حرکت</dt><dd dir="ltr"><kbd>W A S D</kbd><span> / </span><kbd>↑ ← ↓ →</kbd></dd></div>
+        <div><dt>پرش</dt><dd><kbd>Space</kbd></dd></div>
+        <div><dt>افزایش سرعت</dt><dd><kbd>Shift</kbd></dd></div>
+        <div><dt>ترمز</dt><dd><kbd>X</kbd></dd></div>
+        <div><dt>بازدید از ایستگاه</dt><dd><kbd>E</kbd></dd></div>
+        <div><dt>نقشه</dt><dd><kbd>M</kbd></dd></div>
+        <div><dt>بازگشت به شروع و بازسازی</dt><dd><kbd>R</kbd></dd></div>
+        <div><dt>بزرگ‌نمایی</dt><dd>چرخ ماوس</dd></div>
+      </dl>
+      <div class="panel-actions">
+        <button class="drive-start" type="button" data-open="catalog">بازی‌های فلانور</button>
+        <button class="hud-button" type="button" data-fullscreen hidden>تمام‌صفحه</button>
+      </div>
+    </dialog>
+
+    <dialog class="panel" data-panel="catalog" aria-labelledby="catalog-title">
+      <header class="panel-head">
+        <div><h2 id="catalog-title">بازی‌های فلانور</h2><p>سه بازی در سه ایستگاه جزیره.</p></div>
+        <form method="dialog"><button class="close-button" aria-label="بستن" autofocus>×</button></form>
+      </header>
+      <div class="panel-list catalog-list">
+        {projects.map((project, index) => (
+          <button type="button" data-station={index} style={`--station-color: ${project.color}`}>
+            <span class="project-dot" aria-hidden="true"></span><strong>{project.name}</strong><small>{project.stop}</small>
+          </button>
+        ))}
+      </div>
+    </dialog>
+
+    <dialog class="panel project-panel" data-panel="project" aria-labelledby="project-title">
+      <header class="panel-head">
+        <div><p class="project-stop" data-project-stop></p><h2 id="project-title" data-project-name></h2></div>
+        <form method="dialog"><button class="close-button" aria-label="بستن" autofocus>×</button></form>
+      </header>
+      <ProjectComingSoon inDialog />
+      <div data-project-details hidden>
+        <div class="project-content">
+          <div data-project-art class="project-art" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></div>
+          <div><p class="english" lang="en" dir="ltr" data-project-english></p><p data-project-description></p></div>
+        </div>
+        {projects.map(project => project.status === 'released' && <ProjectLinks project={project} inDialog />)}
+        <div class="panel-actions">
+          <form method="dialog"><button class="drive-start">ادامهٔ گشت</button></form>
+          <button type="button" class="hud-button" data-open="catalog">همهٔ بازی‌ها</button>
+        </div>
+      </div>
+    </dialog>
+
+    <script>
+      const stage = document.querySelector<HTMLElement>('.stage');
+      if (stage) {
+        const showFallback = () => {
+          stage.dataset.world = 'unavailable';
+          const error = stage.querySelector<HTMLElement>('[data-world-error]');
+          if (error) error.hidden = false;
+        };
+        import('../game/play')
+          .then(({ mountIsland }) => mountIsland(stage, showFallback))
+          .catch(error => {
+            showFallback();
+            console.error('The island could not be loaded.', error);
+          });
+      }
+    </script>
+  </body>
+</html>

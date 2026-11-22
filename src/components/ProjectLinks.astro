@@ -1,0 +1,18 @@
+---
+import type { Project } from '../projects';
+
+interface Props {
+  project: Extract<Project, { status: 'released' }>;
+  inDialog?: boolean;
+}
+
+const { project, inDialog = false } = Astro.props;
+---
+
+{(project.bazaarUrl || project.myketUrl || project.aparatUrl) && (
+  <div class="project-links" data-project-links={inDialog ? project.id : undefined} hidden={inDialog}>
+    {project.bazaarUrl && <a class="drive-start" href={project.bazaarUrl} target="_blank" rel="noopener">دریافت از کافه‌بازار</a>}
+    {project.myketUrl && <a class="drive-start" href={project.myketUrl} target="_blank" rel="noopener">دریافت از مایکت</a>}
+    {project.aparatUrl && <a class="hud-button" href={project.aparatUrl} target="_blank" rel="noopener">تماشای تیزر در آپارات</a>}
+  </div>
+)}
