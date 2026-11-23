@@ -1,6 +1,7 @@
 import { createControls } from './controls';
 import { createDriving } from './driving';
 import type { createInterface } from './interface';
+import { loadIslandProps } from './island-props';
 import { drawMap } from './map';
 import { stations, type Station } from './layout';
 import { createScene } from './scene';
@@ -9,7 +10,7 @@ export async function mountIsland(stage: HTMLElement, view: ReturnType<typeof cr
   const canvas = stage.querySelector<HTMLCanvasElement>('[data-world-canvas]');
   if (!canvas) throw new Error('Missing island canvas');
 
-  const game = createScene(canvas);
+  const game = createScene(canvas, await loadIslandProps());
   const driving = createDriving(game.buildings, game.props);
   const events = new AbortController();
   const { signal } = events;

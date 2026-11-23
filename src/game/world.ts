@@ -1,10 +1,11 @@
 import * as THREE from 'three';
 import { addCrates, createBreakables } from './breakables';
 import {
-  coast, isInPlaza, loop, mainStreet, nearRoad, onIsland, paths, plazaOutline, plazaPoint, plazaWalk,
+  coast, isInPlaza, loop, mainStreet, monument, nearRoad, onIsland, paths, plazaOutline, plazaPoint, plazaWalk,
   pond, randomGenerator, stations, type Footprint, type Point,
 } from './layout';
 import { createLandmarks } from './landmarks';
+import { placeIslandProp } from './island-props';
 import { box, clay, cylinder, mesh } from './models';
 import { addPlazaSign } from './plaza';
 import { addGrass, terrain } from './terrain';
@@ -108,7 +109,10 @@ function ocean() {
   return { water, material };
 }
 
-function decorate(parent: THREE.Group, buildings: readonly Footprint[], breakables: ReturnType<typeof createBreakables>) {
+function decorate(
+  parent: THREE.Group, buildings: readonly Footprint[], breakables: ReturnType<typeof createBreakables>,
+  imported: THREE.Group | undefined,
+) {
   const random = randomGenerator(17);
   const flora = new THREE.Group();
   parent.add(flora);
@@ -119,26 +123,35 @@ function decorate(parent: THREE.Group, buildings: readonly Footprint[], breakabl
   const crowns = ['#588f78', '#80a35e', '#4e8c85', '#bcad61', '#d99683'];
   const crownGeometry = new THREE.IcosahedronGeometry(1, 1);
   const treePositions = [
-    [-8, -11.9], [-12.9, -7.5], [-11.45, 8.9], [-9, 11.7], [-3.9, -10.2],
+    [-8, -11.9], [-12.9, -7.5, -.4], [-11.45, 8.9], [-9, 11.7], [-3.9, -10.2],
     [8.1, -12.2], [9.7, -8.9], [12.25, -9.9], [24.2, 4.4], [23.2, 8.2], [23.2, -13.1],
     [9.4, -22.2], [-10.5, -22.5], [-20.3, -14], [-22.7, -10.8], [-24.3, 12], [-21.8, 15.6],
     [-15, 20.3], [-12.1, 23.3], [-4.8, 23.25], [2.4, 23.8], [16, 20.3], [17.1, 16.4],
-    [7.9, -.45], [12.7, 1.65], [11, 10], [-7.4, 15.1],
-  ];
+    [7.9, -.45], [12.7, 1.65, 2.7], [11, 10], [-7.4, 15.1],
+  ] as const;
   const trees = [];
-  for (const [index, [x, z]] of treePositions.entries()) {
+  for (const [index, [x, z, cherryAngle]] of treePositions.entries()) {
     const height = 1.1 + random() * .96;
     const radius = 1.05 + random() * .47;
+    const stretch = 1.08 + random() * .28;
+    const rotation = [random(), random(), random() * .17] as const;
+    if (cherryAngle !== undefined) {
+      const cherry = placeIslandProp(imported, 'cherry', flora, breakables, { x, z }, cherryAngle);
+      if (cherry) {
+        trees.push({ x, z, ...cherry });
+        continue;
+      }
+    }
     const stump = cylinder(flora, wood, .153, height * .48, x, height * .24, z, .13, 7);
     const trunk = cylinder(flora, wood, .17, height * .52, x, height * .74, z, .153, 7);
     const tone = index % crowns.length;
     const main = mesh(flora, crownGeometry, clay(crowns[tone]), x, height + .7, z);
-    main.scale.set(radius, radius * (1.08 + random() * .28), radius * .91);
-    main.rotation.set(random(), random(), random() * .17);
+    main.scale.set(radius, radius * stretch, radius * .91);
+    main.rotation.set(...rotation);
     const branch = mesh(flora, crownGeometry, clay(crowns[(tone + 1) % crowns.length]), x + radius * .6, height + .17, z + radius * .28);
     branch.scale.setScalar(radius * .61);
     const prop = breakables.add({ x, z, halfX: .24, halfZ: .24 }, height + radius, [stump, trunk, main, branch]);
-    trees.push({ x, z, main, branch, radius, prop });
+    trees.push({ x, z, crowns: [main, branch], crownY: main.position.y, radius, prop });
   }
 
   for (let count = 0; count < 115; count += 1) {
@@ -200,7 +213,7 @@ function decorate(parent: THREE.Group, buildings: readonly Footprint[], breakabl
   return trees;
 }
 
-function addPark(parent: THREE.Group, breakables: ReturnType<typeof createBreakables>) {
+function addPark(parent: THREE.Group, breakables: ReturnType<typeof createBreakables>, imported: THREE.Group | undefined) {
   const stone = clay('#dbc4a1');
   const clayRed = clay('#c76e50');
   const cream = clay('#fff2ce');
@@ -231,6 +244,7 @@ function addPark(parent: THREE.Group, breakables: ReturnType<typeof createBreaka
   breakables.add({ x: pond.x, z: pond.z, halfX: pond.radiusX, halfZ: pond.radiusZ }, .35, pondPieces, [pondGroup]);
 
   for (const [x, z, angle] of [[8.35, 8.35, .1], [-12.9, 2.1, .9], [4.5, 24.5, -.37]]) {
+    if (placeIslandProp(imported, 'bench', parent, breakables, { x, z }, angle)) continue;
     const bench = new THREE.Group();
     bench.position.set(x, 0, z);
     bench.rotation.y = angle;
@@ -247,12 +261,18 @@ function addPark(parent: THREE.Group, breakables: ReturnType<typeof createBreaka
   }
 
   for (const [x, z] of [[-13.4, 3.7], [7.15, -4.15], [14.4, -1.8], [12.9, 16.95], [-7.7, 22.7]]) {
+    if (placeIslandProp(imported, 'streetlight', parent, breakables, { x, z })) continue;
     breakables.add({ x, z, halfX: .21, halfZ: .21 }, 2.57, [
       cylinder(parent, metal, .095, 2.3, x, 1.15, z, .075, 8),
       cylinder(parent, metal, .21, .15, x, .09, z, .19, 10),
       box(parent, metal, .43, .14, .43, x, 2.5, z, .06),
       box(parent, cream, .26, .26, .26, x, 2.31, z, .045),
     ]);
+  }
+
+  for (const side of [-1, 1]) {
+    const point = plazaPoint(side * 6.2, 4.2);
+    placeIslandProp(imported, 'lantern', parent, breakables, point, monument.angle);
   }
 
   for (const { x, z } of [
@@ -269,7 +289,7 @@ function addPark(parent: THREE.Group, breakables: ReturnType<typeof createBreaka
   }
 }
 
-export function createWorld(scene: THREE.Scene) {
+export function createWorld(scene: THREE.Scene, imported: THREE.Group | undefined) {
   const island = new THREE.Group();
   const { water, material: waterMaterial } = ocean();
   scene.add(water, island);
@@ -314,8 +334,8 @@ export function createWorld(scene: THREE.Scene) {
   const buildings = createLandmarks(island);
   addPlazaSign(island, breakables);
   addCrates(island, breakables);
-  addPark(island, breakables);
-  const trees = decorate(island, buildings, breakables);
+  addPark(island, breakables, imported);
+  const trees = decorate(island, buildings, breakables, imported);
   const grass = addGrass(island, [...buildings, ...breakables.props], isInPlaza);
 
   const rings = stations.map(({ x, z, project }) => {
@@ -339,14 +359,14 @@ export function createWorld(scene: THREE.Scene) {
       grass.update(time, car);
       const distance = Math.hypot(cameraOffset.x, cameraOffset.z);
       const slope = cameraOffset.y / distance;
-      for (const { x, z, main, branch, radius, prop } of trees) {
+      for (const { x, z, crowns, crownY, radius, prop } of trees) {
         const dx = x - car.x;
         const dz = z - car.z;
         const forward = (dx * cameraOffset.x + dz * cameraOffset.z) / distance;
         const side = (dx * cameraOffset.z - dz * cameraOffset.x) / distance;
         const rayHeight = .86 + car.height + forward * slope;
-        const obscuresCar = !prop.broken && forward > 0 && Math.abs(side) < radius + .34 && Math.abs(rayHeight - main.position.y) < radius * 1.14;
-        for (const crown of [main, branch]) {
+        const obscuresCar = !prop.broken && forward > 0 && Math.abs(side) < radius + .34 && Math.abs(rayHeight - crownY) < radius * 1.14;
+        for (const crown of crowns) {
           if (crown.material.transparent === obscuresCar) continue;
           crown.material.transparent = obscuresCar;
           crown.material.opacity = obscuresCar ? .31 : 1;

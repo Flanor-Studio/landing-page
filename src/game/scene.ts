@@ -13,7 +13,7 @@ interface VehiclePose extends Point {
   height: number;
 }
 
-export function createScene(canvas: HTMLCanvasElement) {
+export function createScene(canvas: HTMLCanvasElement, props: THREE.Group | undefined) {
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance' });
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
@@ -41,7 +41,7 @@ export function createScene(canvas: HTMLCanvasElement) {
   const target = new THREE.Vector3();
   const cameraOffset = new THREE.Vector3(26, 37, 52);
   const label = new THREE.Vector3();
-  const world = createWorld(scene);
+  const world = createWorld(scene, props);
   const car = createPeykan();
   scene.add(car.root);
   const dust = createDust(scene);

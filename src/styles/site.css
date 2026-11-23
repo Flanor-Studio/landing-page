@@ -76,7 +76,7 @@ button, h1, h2, h3, p, dd { margin: 0; }
 .splash img {
   border: 1px solid var(--hud-border);
   border-radius: 1.3rem;
-  box-shadow: 0 8px 20px #21162c68;
+  box-shadow: 0 8px 20px #10232d68;
 }
 
 .splash h1 { color: var(--cream); font-size: clamp(2.15rem, 7vw, 3.55rem); font-weight: 900; line-height: 1.2; }
@@ -233,19 +233,19 @@ kbd {
   justify-content: center;
   gap: .72rem;
   padding: .53rem 1.12rem;
-  border: 1px solid #eaf3c7;
+  border: 1px solid #f9dfb8;
   border-radius: .78rem;
   color: var(--ink);
   background: var(--lime);
-  box-shadow: 0 3px 0 #bd7a65, 0 6px 15px #35203945;
+  box-shadow: 0 3px 0 #b18360, 0 6px 15px #10232d45;
   font-size: .99rem;
   font-weight: 750;
 }
 
-.drive-start:hover { background: #eff5bd; }
-.drive-start:active { transform: translateY(2px); box-shadow: 0 1px 0 #6e8456; }
+.drive-start:hover { background: #ffe0ac; }
+.drive-start:active { transform: translateY(2px); box-shadow: 0 1px 0 #b18360; }
 .drive-start:disabled { opacity: .8; }
-.drive-start kbd { color: var(--ink); border-color: #5b3b5856; background: #40223819; }
+.drive-start kbd { color: var(--ink); border-color: #24373e56; background: #24373e19; }
 
 .station-labels { z-index: 1; pointer-events: none; }
 
@@ -259,15 +259,16 @@ kbd {
   gap: .5rem;
   min-width: 4.5rem;
   padding: .4rem .8rem;
-  border: 1px solid color-mix(in srgb, var(--station-color) 56%, #634b69);
+  border: 1px solid color-mix(in srgb, var(--station-color) 56%, var(--hud));
   border-radius: .55rem;
   color: var(--cream);
-  background: #3c2a48ed;
-  box-shadow: 0 3px 11px #321d3959;
+  background: #203947ed;
+  box-shadow: 0 3px 11px #10232d59;
   pointer-events: auto;
   white-space: nowrap;
   font-size: 1rem;
-  font-weight: 680;
+  font-weight: 730;
+  line-height: 1.25;
 }
 
 .station-label img {
@@ -455,8 +456,8 @@ kbd {
   border: 1px solid var(--hud-border);
   border-radius: .8rem;
   color: var(--cream);
-  background: #3c2a48e8;
-  box-shadow: 0 3px 0 #32233e;
+  background: #203947e8;
+  box-shadow: 0 3px 0 #1a303c;
   touch-action: none;
   user-select: none;
   pointer-events: auto;

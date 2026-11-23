@@ -30,7 +30,9 @@ npm run check
 npm run build
 ```
 
-Astro generates a static site in `dist/`. The Three.js world, Mikhak Persian typeface, and Space Grotesk Latin typeface are bundled with the site. The material and grass techniques draw on [Bruno Simon’s 2025 portfolio source](https://github.com/brunosimon/folio-2025). The plaza lettering was shaped from [Mikhak Black by Amin Abedi](https://github.com/aminabedi68/Mikhak).
+Astro generates a static site in `dist/`. The interface uses [Vazirmatn](https://github.com/rastikerdar/vazirmatn) for Persian and Space Grotesk for Latin. The two lines of the plaza sign use right-to-left outlines from Vazirmatn at weights 650 and 900.
+
+The material and grass techniques draw on [Bruno Simon’s 2025 portfolio](https://github.com/brunosimon/folio-2025). The bench, lantern, streetlight, and cherry tree models in `src/assets/island-props.glb` were adapted from the [portfolio source at 70764a9](https://github.com/brunosimon/folio-2025/tree/70764a94756cc4de564e493c8ba46c4b5fe03ed1/static) and are distributed with [its MIT license](public/licenses/bruno-simon.txt).
 
 ## GitHub Pages
 
