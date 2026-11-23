@@ -22,7 +22,7 @@ export function createScene(canvas: HTMLCanvasElement) {
   renderer.shadowMap.type = THREE.PCFShadowMap;
 
   const scene = new THREE.Scene();
-  scene.background = new THREE.Color('#524984');
+  scene.background = new THREE.Color('#234856');
   scene.add(new THREE.HemisphereLight('#ffd7ca', '#9973bc', 1.85));
   const sun = new THREE.DirectionalLight('#ffcea1', 2.6);
   sun.position.copy(sunPosition);
@@ -80,7 +80,7 @@ export function createScene(canvas: HTMLCanvasElement) {
 
     const response = snap || reduceMotion ? 1 : 1 - Math.exp(-dt * 4.4);
     look.lerp(target, response);
-    const desiredHeight = (aspect < .84 ? 29 : 35) * zoom;
+    const desiredHeight = (aspect < .84 ? Math.max(29, 16.6 / aspect) : 35) * zoom;
     if (Math.abs(viewHeight - desiredHeight) > .01) {
       viewHeight = THREE.MathUtils.lerp(viewHeight, desiredHeight, response);
       setProjection();

@@ -3,6 +3,8 @@ import '@fontsource-variable/space-grotesk';
 import '../styles/site.css';
 import ProjectComingSoon from '../components/ProjectComingSoon.astro';
 import ProjectLinks from '../components/ProjectLinks.astro';
+import { atlasPosition, atlasSize } from '../game/map';
+import { stations } from '../game/stations';
 import { projects } from '../projects';
 
 const base = import.meta.env.BASE_URL.replace(/\/?$/, '/');
@@ -14,7 +16,7 @@ const description = 'با یک پیکان در جزیرهٔ فلانور ران�
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-    <meta name="theme-color" content="#32233e" />
+    <meta name="theme-color" content="#1a303c" />
     <meta name="description" content={description} />
     <link rel="icon" href={`${base}logo.png`} type="image/png" />
     <title>جزیرهٔ فلانور | Flanor Studio</title>
@@ -34,9 +36,9 @@ const description = 'با یک پیکان در جزیرهٔ فلانور ران�
         <div class="game-edge" aria-hidden="true"></div>
 
         <header class="topbar" data-game-header hidden>
-          <a class="brand" href="#island" data-home aria-label="فلانور استودیو، خانه" dir="ltr">
+          <a class="brand" href="#island" data-home aria-label="استودیو فلانور، خانه" dir="ltr">
             <img src={`${base}logo.png`} width="46" height="46" alt="" decoding="async" />
-            <strong>FLANOR<small>STUDIO</small></strong>
+            <span class="brand-wordmark"><strong dir="rtl">استودیو فلانور</strong><small lang="en">FLANOR STUDIO</small></span>
           </a>
           <div class="top-actions">
             <button class="hud-button" type="button" data-open="map" aria-haspopup="dialog">
@@ -52,17 +54,20 @@ const description = 'با یک پیکان در جزیرهٔ فلانور ران�
           {projects.map((project, index) => (
             <button class="station-label" type="button" data-station={index}
               style={`--station-color: ${project.color}`} aria-haspopup="dialog">
-              <i aria-hidden="true"></i>{project.name}
+              {project.status === 'released'
+                ? <img src={`${base}icons/${project.id}.png`} alt="" width="28" height="28" />
+                : <i aria-hidden="true"></i>}
+              {project.name}
             </button>
           ))}
         </div>
 
         <div class="game-bottom" data-game-ui hidden>
           <button type="button" class="mini-map" data-open="map" aria-haspopup="dialog" aria-label="باز کردن نقشهٔ جزیره">
-            <div class="mini-map-image">
+            <span class="mini-map-image">
               <canvas data-mini-map width="300" height="225" aria-hidden="true"></canvas>
               <span class="map-n" aria-hidden="true" dir="ltr">N</span>
-            </div>
+            </span>
             <span class="mini-map-foot"><strong>نقشهٔ جزیره</strong><output data-count dir="ltr">۰ / ۳</output></span>
           </button>
 
@@ -129,10 +134,28 @@ const description = 'با یک پیکان در جزیرهٔ فلانور ران�
         <div><h2 id="map-title">نقشهٔ جزیره</h2><p>یک ایستگاه را انتخاب کن و به آنجا برو.</p></div>
         <form method="dialog"><button class="close-button" aria-label="بستن" autofocus>×</button></form>
       </header>
-      <div class="atlas" aria-hidden="true" hidden>
-        <canvas data-atlas width="768" height="500"></canvas><span class="map-n" dir="ltr">N</span>
+      <div class="atlas" hidden>
+        <canvas data-atlas width={atlasSize.width} height={atlasSize.height} aria-hidden="true"></canvas>
+        <span class="map-n" dir="ltr" aria-hidden="true">N</span>
+        {stations.map((station, index) => {
+          const { project } = station;
+          const { left, top } = atlasPosition(station);
+          return (
+            <button class="atlas-pin" type="button" data-travel={index}
+              style={`--station-color: ${project.color}; left: ${left}%; top: ${top}%`}
+              aria-label={`رفتن به ${project.name}`} title={project.name}>
+              {project.status === 'released'
+                ? <img src={`${base}icons/${project.id}.png`} alt="" width="32" height="32" />
+                : <span class="project-dot" aria-hidden="true"></span>}
+            </button>
+          );
+        })}
       </div>
-      <div class="panel-list">
+      <div class="map-key" hidden data-map-key>
+        <span class="map-key-player">موقعیت شما</span>
+        <span class="map-key-plaza">میدان استودیو</span>
+      </div>
+      <div class="panel-list map-stops">
         {projects.map((project, index) => (
           <button type="button" data-travel={index} style={`--station-color: ${project.color}`}>
             <span class="project-dot" aria-hidden="true"></span><strong>{project.name}</strong><small>{project.stop}</small>

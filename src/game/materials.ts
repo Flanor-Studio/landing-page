@@ -2,8 +2,8 @@ import { Color, MeshLambertMaterial, type MeshLambertMaterialParameters, type Te
 
 export const sunPosition = new Vector3(-30, 47, 27);
 const sunDirection = sunPosition.clone().normalize();
-const sunlight = new Color('#ffe1bf').multiplyScalar(1.16);
-const shadowInk = new Color('#762d91');
+const sunlight = new Color('#fff0d6').multiplyScalar(1.12);
+const shadowInk = new Color('#354e61');
 interface GrassMotion {
   wind: { value: number };
   tracks: { value: Texture };
@@ -38,7 +38,7 @@ export class IslandMaterial extends MeshLambertMaterial {
       float shade = max(faceShade * 0.68, (1.0 - getShadowMask()) * 0.93);
       ${this.grass ? 'shade = max(shade, (1.0 - smoothstep(0.0, 0.92, bladeHeight)) * 0.85);' : ''}
       vec3 lit = diffuseColor.rgb * islandSun;
-      vec3 tinted = mix(diffuseColor.rgb * vec3(0.54, 0.30, 0.64), islandShadow, 0.25);
+      vec3 tinted = mix(diffuseColor.rgb * vec3(0.45, 0.51, 0.61), islandShadow, 0.25);
       outgoingLight = mix(lit, tinted, shade) + totalEmissiveRadiance;
       #include <opaque_fragment>
     `);

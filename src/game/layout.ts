@@ -35,18 +35,60 @@ export function ribbon(points: readonly (readonly [number, number])[], closed = 
 }
 
 export const loop = ribbon([
-  [-16.6, 5], [-16.4, -6], [-10.5, -15.4], [-.5, -17.8], [10.2, -15],
-  [17, -8], [17, 3.9], [13.8, 12], [6.9, 16.9], [-5.4, 17.8], [-13.9, 13],
+  [-16.6, 5], [-17.7, -4.9], [-13.5, -12.5], [-7.1, -16.7], [-.5, -17.8],
+  [8.6, -16.4], [14.4, -12.9], [17, -3.5], [18, 4.7], [14.2, 12.1],
+  [6.9, 16.9], [-3.1, 18.7], [-11, 16], [-15.3, 11.3],
 ], true, 135);
 
-export const mainStreet = ribbon([[0, 17.9], [0, 8], [0, -4], [-.5, -17.8]], false, 52);
+export const mainStreet = ribbon([[-3.1, 18.7], [0, 12.8], [1, 6.9], [3.85, -.5], [4.35, -7], [2.5, -12.5], [-.5, -17.8]], false, 64);
 
 export const paths = [
   ribbon([[-16.5, 4.7], [-21, 4.7], [-23, 4.7]], false, 14),
   ribbon([[-.5, -17.6], [-.5, -21], [-.5, -24]], false, 14),
   ribbon([[16.9, -3.5], [21, -3.5], [23.5, -3.5]], false, 14),
-  ribbon([[6.8, 16.8], [9, 21], [10.8, 23.6]], false, 14),
+  ribbon([[6.8, 16.8], [9.2, 20.8], [8.5, 24], [4.3, 26.2], [-2.3, 26.7], [-7.2, 24.4], [-11, 16]], false, 48),
 ];
+
+export const monument = { x: -6.4, z: -4.9, angle: Math.atan(.5) };
+export const pond = { x: 9.1, z: 4.7, radiusX: 3.65, radiusZ: 2.85 };
+
+const plazaHalfWidth = 7.45;
+const plazaHalfDepth = 4.45;
+const plazaCornerRadius = 1.75;
+const plazaCenterZ = 1.75;
+const plazaCos = Math.cos(monument.angle);
+const plazaSin = Math.sin(monument.angle);
+
+export function plazaPoint(x: number, z: number): Point {
+  return {
+    x: monument.x + x * plazaCos + z * plazaSin,
+    z: monument.z - x * plazaSin + z * plazaCos,
+  };
+}
+
+export function plazaOutline(inset = 0) {
+  return [0, 1, 2, 3].flatMap(corner => {
+    const x = (corner === 0 || corner === 3 ? 1 : -1) * (plazaHalfWidth - plazaCornerRadius);
+    const z = plazaCenterZ + (corner < 2 ? 1 : -1) * (plazaHalfDepth - plazaCornerRadius);
+    return Array.from({ length: 11 }, (_, step) => {
+      const angle = (corner + step / 10) * Math.PI / 2;
+      return plazaPoint(x + Math.cos(angle) * (plazaCornerRadius - inset), z + Math.sin(angle) * (plazaCornerRadius - inset));
+    });
+  });
+}
+
+const forecourtEnd = plazaPoint(1.9, 5.45);
+export const plazaWalk = ribbon([
+  [forecourtEnd.x, forecourtEnd.z], [-.05, 2.9], [2.55, 3.2],
+], false, 18);
+
+export function isInPlaza(x: number, z: number) {
+  const dx = x - monument.x;
+  const dz = z - monument.z;
+  const side = Math.abs(dx * plazaCos - dz * plazaSin) - (plazaHalfWidth - plazaCornerRadius);
+  const front = Math.abs(dx * plazaSin + dz * plazaCos - plazaCenterZ) - (plazaHalfDepth - plazaCornerRadius);
+  return Math.hypot(Math.max(0, side), Math.max(0, front)) < plazaCornerRadius + .12;
+}
 
 export function onIsland(x: number, z: number, margin = 0): boolean {
   const angle = Math.atan2(z / 33, x / 34);
@@ -56,7 +98,7 @@ export function onIsland(x: number, z: number, margin = 0): boolean {
 
 export function nearRoad(x: number, z: number, distance: number) {
   const squared = distance * distance;
-  return [loop, mainStreet, ...paths].some(road => road.some(point => (point.x - x) ** 2 + (point.z - z) ** 2 < squared));
+  return [loop, mainStreet, plazaWalk, ...paths].some(road => road.some(point => (point.x - x) ** 2 + (point.z - z) ** 2 < squared));
 }
 
 export function randomGenerator(seed: number) {

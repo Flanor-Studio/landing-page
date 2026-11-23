@@ -137,7 +137,7 @@ export function addCrates(parent: THREE.Group, breakables: ReturnType<typeof cre
   const wood = clay('#c8784a');
   const slat = clay('#e89e59');
   const frame = clay('#975144');
-  for (const [x, z, angle] of [[2.35, 6.3, .23], [8.55, 10.7, -.28], [-13.2, 6.9, -.38], [2.8, -16.2, .18], [19.5, -1.15, .42]]) {
+  for (const [x, z, angle] of [[-12.35, 5.4, .23], [9, 12, -.28], [-20.7, 8.6, -.38], [2.8, -16.2, .18], [19.5, -1.15, .42]]) {
     const crate = new THREE.Group();
     crate.position.set(x, .027, z);
     crate.rotation.y = angle;

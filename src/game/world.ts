@@ -1,9 +1,12 @@
 import * as THREE from 'three';
 import { addCrates, createBreakables } from './breakables';
-import { coast, loop, mainStreet, nearRoad, onIsland, paths, randomGenerator, stations, type Footprint, type Point } from './layout';
+import {
+  coast, isInPlaza, loop, mainStreet, nearRoad, onIsland, paths, plazaOutline, plazaPoint, plazaWalk,
+  pond, randomGenerator, stations, type Footprint, type Point,
+} from './layout';
 import { createLandmarks } from './landmarks';
 import { box, clay, cylinder, mesh } from './models';
-import { addPlazaSign, isInPlaza, plaza } from './plaza';
+import { addPlazaSign } from './plaza';
 import { addGrass, terrain } from './terrain';
 
 function planarUV(geometry: THREE.BufferGeometry) {
@@ -86,15 +89,15 @@ function ocean() {
         float angle = atan(radial.y, radial.x);
         float shore = length(radial) - 1. - .056 * sin(angle * 3. + .5) - .022 * cos(angle * 7.);
         float aqua = 1. - smoothstep(-.07, .59, shore);
-        vec3 deep = vec3(.29, .24, .45);
-        vec3 shallow = vec3(.54, .43, .66);
+        vec3 deep = vec3(.12, .25, .34);
+        vec3 shallow = vec3(.29, .56, .56);
         float ripple = sin(world.x * .84 + world.y * .47 + sin(world.y * .34) * 1.1 + time * .63);
         float crossWave = sin(world.x * .52 - world.y * .86 - time * .37);
         float glints = smoothstep(.66, 1., ripple) * smoothstep(.46, 1., crossWave);
         float tide = sin(shore * 169. - time * 1.16 + sin(angle * 27.) * .65);
         float coastFoam = smoothstep(.72, 1., tide) * (1. - smoothstep(.008, .105, abs(shore + .007)));
         vec3 color = mix(deep, shallow, aqua) + ripple * .011 + glints * .046;
-        color = mix(color, vec3(.90, .72, .86), coastFoam * .55);
+        color = mix(color, vec3(.77, .88, .79), coastFoam * .56);
         gl_FragColor = vec4(color, 1.);
       }
     `,
@@ -113,14 +116,14 @@ function decorate(parent: THREE.Group, buildings: readonly Footprint[], breakabl
   const wood = clay('#aa6b57');
   const rocks = clay('#c799b4');
   const rockGeometry = new THREE.IcosahedronGeometry(1, 0);
-  const crowns = ['#e27f8e', '#f3a4af', '#e58c74', '#e6b853', '#cd939c'];
+  const crowns = ['#588f78', '#80a35e', '#4e8c85', '#bcad61', '#d99683'];
   const crownGeometry = new THREE.IcosahedronGeometry(1, 1);
   const treePositions = [
-    [-9, -6], [-10.6, 1.3], [-10.2, 7.9], [-7.2, 9.3], [-8.2, -3],
-    [5.4, -12], [8.3, -8.3], [9.6, -12], [24.2, 4.4], [23.2, 8.2], [23.2, -13.1],
+    [-8, -11.9], [-12.9, -7.5], [-11.45, 8.9], [-9, 11.7], [-3.9, -10.2],
+    [8.1, -12.2], [9.7, -8.9], [12.25, -9.9], [24.2, 4.4], [23.2, 8.2], [23.2, -13.1],
     [9.4, -22.2], [-10.5, -22.5], [-20.3, -14], [-22.7, -10.8], [-24.3, 12], [-21.8, 15.6],
-    [-15, 20.3], [-12.1, 23.3], [-6.3, 24.8], [2.4, 23.8], [16, 20.3], [17.1, 16.4],
-    [-5.6, 5.3], [10.4, 6.2], [10.8, 15.3], [-5.9, 14.2],
+    [-15, 20.3], [-12.1, 23.3], [-4.8, 23.25], [2.4, 23.8], [16, 20.3], [17.1, 16.4],
+    [7.9, -.45], [12.7, 1.65], [11, 10], [-7.4, 15.1],
   ];
   const trees = [];
   for (const [index, [x, z]] of treePositions.entries()) {
@@ -204,29 +207,30 @@ function addPark(parent: THREE.Group, breakables: ReturnType<typeof createBreaka
   const wood = clay('#966f57');
   const metal = clay('#3f5d57');
 
-  const pond = new THREE.Group();
-  pond.position.set(8.5, .035, 3.2);
-  parent.add(pond);
-  const basin = cylinder(pond, stone, 4.02, .18, 0, .025, 0, 4, 30);
-  basin.scale.set(1, 1, .81);
-  const pool = cylinder(pond, clay('#70aeb0'), 3.71, .055, 0, .132, 0, 3.71, 30);
-  pool.scale.set(1, 1, .8);
+  const pondGroup = new THREE.Group();
+  pondGroup.position.set(pond.x, .035, pond.z);
+  parent.add(pondGroup);
+  const basin = cylinder(pondGroup, stone, pond.radiusX, .18, 0, .025, 0, pond.radiusX, 40);
+  basin.scale.z = pond.radiusZ / pond.radiusX;
+  const pool = cylinder(pondGroup, clay('#65adab'), pond.radiusX - .27, .055, 0, .132, 0, pond.radiusX - .27, 40);
+  pool.scale.z = (pond.radiusZ - .27) / (pond.radiusX - .27);
   const pondPieces: THREE.Mesh[] = [];
   for (const [x, z] of [[-.7, .9], [1, 1.1], [1.9, -.6], [-1.8, -.8]]) {
-    const pad = cylinder(pond, clay('#7a9f6d'), .45, .035, x, .17, z, .45, 10);
+    const pad = cylinder(pondGroup, clay('#7a9f6d'), .45, .035, x, .17, z, .45, 10);
     pad.scale.z = .75;
-    pondPieces.push(pad, mesh(pond, new THREE.IcosahedronGeometry(.156, 0), clay('#e8a898'), x, .27, z));
+    pondPieces.push(pad, mesh(pondGroup, new THREE.IcosahedronGeometry(.156, 0), clay('#e8a898'), x, .27, z));
   }
   for (let index = 0; index < 10; index += 1) {
     const angle = index / 10 * Math.PI * 2;
-    const chunk = box(pond, stone, .95, .21, .48, Math.cos(angle) * 3.61, .11, Math.sin(angle) * 2.91, .065);
+    const chunk = box(pondGroup, stone, .95, .21, .48,
+      Math.cos(angle) * (pond.radiusX - .2), .11, Math.sin(angle) * (pond.radiusZ - .2), .065);
     chunk.rotation.y = -angle + Math.PI / 2;
     chunk.visible = false;
     pondPieces.push(chunk);
   }
-  breakables.add({ x: 8.5, z: 3.2, halfX: 3.4, halfZ: 2.75 }, .35, pondPieces, [pond]);
+  breakables.add({ x: pond.x, z: pond.z, halfX: pond.radiusX, halfZ: pond.radiusZ }, .35, pondPieces, [pondGroup]);
 
-  for (const [x, z, angle] of [[7.24, 7.6, -.12], [-5.15, -7.3, .78], [10.5, 23.5, -.65]]) {
+  for (const [x, z, angle] of [[8.35, 8.35, .1], [-12.9, 2.1, .9], [4.5, 24.5, -.37]]) {
     const bench = new THREE.Group();
     bench.position.set(x, 0, z);
     bench.rotation.y = angle;
@@ -242,7 +246,7 @@ function addPark(parent: THREE.Group, breakables: ReturnType<typeof createBreaka
     ]);
   }
 
-  for (const [x, z] of [[-3.2, 6], [-13.4, 3.7], [4.2, -16.9], [14.7, -1.8], [12.9, 16.95]]) {
+  for (const [x, z] of [[-13.4, 3.7], [7.15, -4.15], [14.4, -1.8], [12.9, 16.95], [-7.7, 22.7]]) {
     breakables.add({ x, z, halfX: .21, halfZ: .21 }, 2.57, [
       cylinder(parent, metal, .095, 2.3, x, 1.15, z, .075, 8),
       cylinder(parent, metal, .21, .15, x, .09, z, .19, 10),
@@ -251,7 +255,10 @@ function addPark(parent: THREE.Group, breakables: ReturnType<typeof createBreaka
     ]);
   }
 
-  for (const [x, z] of [[-3.6, 12.7], [10.1, 6.8], [-20.3, 7.9], [21.6, -.65], [-3.34, -21.9]]) {
+  for (const { x, z } of [
+    plazaPoint(-6.7, 1.48), plazaPoint(6.7, 1.48),
+    { x: 10.7, z: 8.1 }, { x: -20.3, z: 7.9 }, { x: 21.6, z: -.65 }, { x: -3.34, z: -21.9 },
+  ]) {
     const plant = mesh(parent, new THREE.IcosahedronGeometry(.42, 1), clay('#6c9f70'), x, .67, z);
     plant.scale.y = 1.3;
     breakables.add({ x, z, halfX: .5, halfZ: .5 }, 1.2, [
@@ -267,12 +274,13 @@ export function createWorld(scene: THREE.Scene) {
   const { water, material: waterMaterial } = ocean();
   scene.add(water, island);
 
-  const meadow = terrain('#ce983f', ['#e7a74665', '#a77c2d66', '#f7cb5e4a']);
-  const beach = terrain('#ecac87', ['#fbc69b89', '#cd88676b', '#fadab256']);
-  const edge = terrain('#b67777', ['#df968777', '#9b5b8057', '#cc7e6b55']);
-  const street = terrain('#d2845e', ['#e28c62', '#df865c', '#e89369', '#dd835a', '#e7926e'], true);
-  const shoulder = terrain('#d99064', ['#fcc58d76', '#c773584a', '#e89d6062']);
-  const plazaTiles = terrain('#ec9a71', ['#ef996f', '#ed946a', '#f0a178', '#e98e65', '#f29d74'], true);
+  const meadow = terrain('#8d9b57', ['#a2ad6b82', '#657d564d', '#c0ae645c']);
+  const beach = terrain('#dec194', ['#f4d3a189', '#b99c7b6b', '#fae4bc56']);
+  const edge = terrain('#927c72', ['#bd937877', '#685d6757', '#d1a18055']);
+  const street = terrain('#bf8e73', ['#c69478', '#c29075', '#c99b80', '#c38e74', '#c6957e'], true);
+  const shoulder = terrain('#d5b08a', ['#f1ceaa80', '#ad87654a', '#e6bb9062']);
+  const plazaTiles = terrain('#deccaa', ['#e1cfae', '#dccaab', '#e7d5b6', '#d7c4a4', '#e1cfb1'], true);
+  const plazaTrim = clay('#75948a');
 
   band(island, coast, .91, .995, -.43, -.78, edge);
   band(island, coast, .955, 1.024, -.218, -.76, beach);
@@ -280,13 +288,27 @@ export function createWorld(scene: THREE.Scene) {
   band(island, coast, .872, .9, -.025, -.07, meadow);
   ground(island, coast, .875, -.025, meadow);
 
-  for (const path of paths) stripe(island, path, 1.85, .006, shoulder);
+  paths.forEach((path, index) => stripe(island, path, 1.85, .006 + .0004 * index, shoulder));
   stripe(island, loop, 5.8, .004, shoulder, 0, true);
   stripe(island, mainStreet, 5.45, .005, shoulder);
   stripe(island, loop, 4.95, .013, street, 0, true);
   stripe(island, mainStreet, 4.64, .017, street);
 
-  ground(island, plaza, 1, .023, plazaTiles);
+  stripe(island, plazaWalk, 2.8, .016, plazaTiles);
+  ground(island, plazaOutline(), 1, .023, plazaTiles);
+  const border = plazaOutline(.26);
+  stripe(island, [...border, border[0]], .16, .026, plazaTrim, 0, true);
+  const mosaic = plazaPoint(-1.35, 3.65);
+  const mosaicOutline = Array.from({ length: 9 }, (_, index) => {
+    const angle = index * Math.PI / 4 + Math.PI / 8;
+    return { x: mosaic.x + Math.cos(angle) * 1.17, z: mosaic.z + Math.sin(angle) * 1.17 };
+  });
+  stripe(island, mosaicOutline, .075, .028, plazaTrim, 0, true);
+  ground(island, Array.from({ length: 8 }, (_, index) => {
+    const angle = index * Math.PI / 4;
+    const radius = index % 2 ? .3 : .96;
+    return { x: mosaic.x + Math.cos(angle) * radius, z: mosaic.z + Math.sin(angle) * radius };
+  }), 1, .028, plazaTrim);
 
   const breakables = createBreakables(scene);
   const buildings = createLandmarks(island);

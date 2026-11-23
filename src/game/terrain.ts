@@ -54,8 +54,8 @@ export function addGrass(parent: THREE.Group, obstacles: readonly Footprint[], o
     -.04, .54, .026, .078, .56, .018, .12, 1, .082,
   ], 3));
   geometry.computeVertexNormals();
-  const attempts = 26500;
-  const banks = [[-5.8, 7.4], [-5.2, 14.1], [5.75, 18.25], [10.9, 15.7], [8.5, 6.7], [3.8, 4.25]];
+  const attempts = 21000;
+  const banks = [[-10.4, 5.6], [-10.8, -9.5], [-4.7, 13.1], [10.9, 15.7], [11.3, 8.7], [10.8, -5.5]];
   const trackSize = 128;
   const trackSpan = 64;
   const cellSize = trackSpan / trackSize;
@@ -66,7 +66,7 @@ export function addGrass(parent: THREE.Group, obstacles: readonly Footprint[], o
   const material = new IslandMaterial({ side: THREE.DoubleSide }, { wind, tracks: { value: tracks }, span: { value: trackSpan } });
   const blades = new THREE.InstancedMesh(geometry, material, attempts);
   blades.receiveShadow = true;
-  const colors = ['#edb727', '#db9e2b', '#f6cc58', '#bbaa43', '#ca902b'].map(value => new THREE.Color(value));
+  const colors = ['#a4ac60', '#819451', '#c4b771', '#9ca752', '#788b55'].map(value => new THREE.Color(value));
   const transform = new THREE.Object3D();
   const tint = new THREE.Color();
   let count = 0;
@@ -79,7 +79,7 @@ export function addGrass(parent: THREE.Group, obstacles: readonly Footprint[], o
     const roadEdge = 2.66 + field * .65;
     if (field < .16 || !onIsland(x, z, 4.4) || nearRoad(x, z, roadEdge) || openingClear(x, z)) continue;
     if (obstacles.some(item => Math.abs(x - item.x) < item.halfX + .28 && Math.abs(z - item.z) < item.halfZ + .28)) continue;
-    const height = (.35 + random() * .56) * (.76 + field * .46);
+    const height = (.25 + random() * .47) * (.76 + field * .46);
     transform.position.set(x, -.024, z);
     transform.rotation.set(0, random() * Math.PI * 2, (random() - .5) * .25);
     transform.scale.set(.87 + random() * .78, height, 1);

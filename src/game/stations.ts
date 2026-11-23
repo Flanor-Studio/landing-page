@@ -1,6 +1,6 @@
 import { projects } from '../projects';
 
-export const spawn = { x: 0, z: 10.6, heading: Math.PI };
+export const spawn = { x: .85, z: 7.4, heading: 2.87 };
 
 export const stations = [
   { project: projects[0], x: -16.6, z: 5, buildingX: -23, buildingZ: 5, labelY: 6.8, heading: Math.PI },

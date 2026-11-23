@@ -25,9 +25,12 @@ export function createInterface(stage: HTMLElement, actions: Actions) {
   const nearby = element<HTMLElement>(stage, '[data-nearby]');
   const nearbyLabel = element<HTMLElement>(nearby, '[data-nearby-label]');
   const announcement = element<HTMLElement>(stage, '[data-announcement]');
+  const header = element<HTMLElement>(stage, '[data-game-header]');
   const mapCanvas = element<HTMLCanvasElement>(stage, '[data-mini-map]');
   const atlasCanvas = element<HTMLCanvasElement>(document, '[data-atlas]');
   const atlas = element<HTMLElement>(document, '.atlas');
+  const mapKey = element<HTMLElement>(document, '[data-map-key]');
+  const atlasPins = Array.from(atlas.querySelectorAll<HTMLButtonElement>('[data-travel]'));
   const panels = {
     map: element<HTMLDialogElement>(document, '[data-panel="map"]'),
     guide: element<HTMLDialogElement>(document, '[data-panel="guide"]'),
@@ -49,7 +52,7 @@ export function createInterface(stage: HTMLElement, actions: Actions) {
     active = panels[which];
     active.showModal();
     actions.pauseInput();
-    if (which === 'map') renderMap(atlasContext);
+    if (which === 'map' && atlasContext) mapRenderer?.(atlasContext, position, status, true);
   }
 
   function openStation(station: Station) {
@@ -140,6 +143,7 @@ export function createInterface(stage: HTMLElement, actions: Actions) {
     nearbyLabel.textContent = 'بازدید از ' + station.project.name;
     if (!status.has(station.project.id)) {
       status.add(station.project.id);
+      atlasPins[stations.indexOf(station)]?.setAttribute('data-visited', '');
       count.value = digits.format(status.size) + ' / ' + digits.format(stations.length);
       announcement.textContent = 'به ایستگاه ' + station.project.name + ' رسیدی.';
     }
@@ -153,32 +157,41 @@ export function createInterface(stage: HTMLElement, actions: Actions) {
     driveHud.style.setProperty('--speed', (kilometers / 90).toFixed(3));
   }
 
-  function renderMap(context: CanvasRenderingContext2D | null) {
-    if (context) mapRenderer?.(context, position, status);
-  }
-
   function setMapRenderer(renderer: typeof drawMap) {
     if (mapRenderer) return;
     mapRenderer = renderer;
     mapContext = mapCanvas.getContext('2d');
     atlasContext = atlasCanvas.getContext('2d');
     atlas.hidden = !atlasContext;
-    if (active === panels.map) renderMap(atlasContext);
+    mapKey.hidden = !atlasContext;
+    if (active === panels.map && atlasContext) mapRenderer(atlasContext, position, status, true);
   }
 
   function updateMap(pose: Point & { heading: number }) {
     position = pose;
-    renderMap(mapContext);
+    if (mapContext) mapRenderer?.(mapContext, position, status);
   }
 
   function updateLabels(project: (x: number, y: number, z: number) => Point2) {
     const { clientWidth, clientHeight } = stage;
+    const top = header.offsetTop + header.offsetHeight + 12;
     labels.forEach((label, index) => {
       const station = stations[index];
       const { x, y } = project(station.buildingX, station.labelY, station.buildingZ);
-      const visible = x > 45 && x < clientWidth - 45 && y > 100 && y < clientHeight - 135;
-      label.hidden = !visible;
-      if (visible) label.style.transform = `translate3d(${Math.round(x)}px, ${Math.round(y)}px,0) translate(-50%,-100%)`;
+      const visible = x > 75 && x < clientWidth - 75 && y > top && y < clientHeight - 135;
+      label.toggleAttribute('data-offscreen', !visible);
+      if (visible) {
+        label.style.transform = `translate3d(${Math.round(x)}px, ${Math.round(y)}px,0) translate(-50%,-100%)`;
+        return;
+      }
+
+      const halfWidth = label.offsetWidth / 2;
+      const halfHeight = label.offsetHeight / 2;
+      const edgeX = Math.max(halfWidth + 8, Math.min(clientWidth - halfWidth - 8, x));
+      const edgeY = Math.max(top + halfHeight, Math.min(clientHeight - 135 - halfHeight, y));
+      const angle = Math.atan2(y - edgeY, x - edgeX);
+      label.style.setProperty('--arrow-angle', `${angle}rad`);
+      label.style.transform = `translate3d(${Math.round(edgeX)}px, ${Math.round(edgeY)}px,0) translate(-50%,-50%)`;
     });
   }
 
