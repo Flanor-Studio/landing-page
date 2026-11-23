@@ -41,16 +41,17 @@ button, h1, h2, h3, p, dd { margin: 0; }
   min-height: 350px;
   overflow: hidden;
   outline: none;
-  background: #655186 var(--island-poster) center / cover no-repeat;
+  background: #655186;
 }
 
-.game-view, .game-view canvas, .game-edge, .station-labels {
+.island-poster, .island-poster img, .game-view, .game-view canvas, .game-edge, .station-labels {
   position: absolute;
   inset: 0;
   width: 100%;
   height: 100%;
 }
 
+.island-poster img { display: block; object-fit: cover; }
 .game-view canvas { display: block; }
 .stage:not([data-world="ready"]) .game-view { visibility: hidden; }
 
@@ -439,6 +440,7 @@ kbd {
 
 .close-button:hover { border-color: var(--lime); }
 .atlas { margin-bottom: 1rem; }
+.map-loading:not(:empty) { margin-top: .75rem; color: var(--muted); }
 .atlas .map-n { top: .75rem; right: .85rem; font-size: .98rem; }
 .panel-list { display: grid; gap: .44rem; }
 
@@ -558,7 +560,7 @@ kbd {
 .fallback article h3 { display: inline-block; margin-inline-start: .45rem; }
 .fallback .project-coming-soon { margin-top: .65rem; }
 .stage[data-world="unavailable"] { height: min(39rem, 83dvh); }
-.stage[data-world="unavailable"] ~ .fallback { display: block; }
+.stage[data-world="unavailable"] ~ .fallback, .fallback:target { display: block; }
 .stage[data-world="unavailable"] :is([data-open="map"], [data-start], [data-stations], [data-touch], [data-game-ui]) { display: none !important; }
 
 .world-error { position: absolute; right: var(--stage-pad); bottom: 1.25rem; left: var(--stage-pad); z-index: 3; width: fit-content; padding: .58rem .8rem; border-radius: .55rem; background: var(--hud); }

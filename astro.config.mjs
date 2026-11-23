@@ -1,19 +1,25 @@
 import { defineConfig } from 'astro/config';
 
-const [owner, repository] = (process.env.GITHUB_REPOSITORY ?? '').split('/');
 const pagesUrl = process.env.PAGES_ORIGIN || 'https://flanorstudio.ir';
 
 export default defineConfig({
   output: 'static',
-  site: pagesUrl || (githubHost ? `https://${githubHost}` : undefined),
+  site: pagesUrl,
   base: process.env.PAGES_BASE || '/',
-  build: { format: 'directory' },
+  build: { format: 'directory', inlineStylesheets: 'always' },
   vite: {
+    // Use the source modules so the renderer and shader data can download separately.
+    resolve: { alias: [{ find: /^three$/, replacement: 'three/src/Three.js' }] },
     build: {
       rolldownOptions: {
         output: {
           codeSplitting: {
-            groups: [{ name: 'three-core', test: /\/three\/build\/three\.core\.js$/ }],
+            groups: [
+              { name: 'three-curves', test: /\/three\/src\/extras\/curves\/CatmullRomCurve3\.js$/ },
+              { name: 'three-shaders', test: /\/three\/src\/renderers\/shaders\/.*\.glsl\.js$/ },
+              { name: 'three-core', test: /\/three\/src\/(?!renderers\/|Three\.)/ },
+              { name: 'three-renderer', test: /\/three\/src\/renderers\// },
+            ],
           },
         },
       },

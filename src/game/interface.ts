@@ -1,11 +1,12 @@
-import { drawMap } from './map';
-import { stations, type Point, type Station } from './layout';
+import type { drawMap } from './map';
+import type { Point } from './layout';
+import { spawn, stations, type Station } from './stations';
 
 interface Actions {
   start(): void;
   home(): void;
   reset(): void;
-  travel(station: Station): boolean;
+  travel(station: Station): void;
   visit(): void;
   pauseInput(): void;
 }
@@ -13,7 +14,7 @@ interface Actions {
 const digits = new Intl.NumberFormat('fa-IR', { useGrouping: false });
 type Panel = 'map' | 'guide' | 'catalog' | 'project';
 
-function element<T extends Element>(root: ParentNode, selector: string): T {
+export function element<T extends Element>(root: ParentNode, selector: string): T {
   const node = root.querySelector<T>(selector);
   if (!node) throw new Error('Missing island element ' + selector);
   return node;
@@ -21,7 +22,6 @@ function element<T extends Element>(root: ParentNode, selector: string): T {
 
 export function createInterface(stage: HTMLElement, actions: Actions) {
   const welcome = element<HTMLElement>(stage, '[data-welcome]');
-  const start = element<HTMLButtonElement>(stage, '[data-start]');
   const speed = element<HTMLOutputElement>(stage, '[data-speed]');
   const count = element<HTMLOutputElement>(stage, '[data-count]');
   const driveHud = element<HTMLElement>(stage, '.drive-hud');
@@ -30,8 +30,7 @@ export function createInterface(stage: HTMLElement, actions: Actions) {
   const announcement = element<HTMLElement>(stage, '[data-announcement]');
   const mapCanvas = element<HTMLCanvasElement>(stage, '[data-mini-map]');
   const atlasCanvas = element<HTMLCanvasElement>(document, '[data-atlas]');
-  const mapContext = mapCanvas.getContext('2d');
-  const atlasContext = atlasCanvas.getContext('2d');
+  const atlas = element<HTMLElement>(document, '.atlas');
   const panels = {
     map: element<HTMLDialogElement>(document, '[data-panel="map"]'),
     guide: element<HTMLDialogElement>(document, '[data-panel="guide"]'),
@@ -41,16 +40,27 @@ export function createInterface(stage: HTMLElement, actions: Actions) {
   const labels = Array.from(stage.querySelectorAll<HTMLButtonElement>('[data-station]'));
   const status = new Set<string>();
   let active: HTMLDialogElement | undefined;
-  let position: Point & { heading: number };
+  let position: Point & { heading: number } = spawn;
+  let mapRenderer: typeof drawMap | undefined;
+  let mapContext: CanvasRenderingContext2D | null = null;
+  let atlasContext: CanvasRenderingContext2D | null = null;
+  let mapRequested = false;
   let lastStation: Station | undefined;
 
   function open(which: Panel) {
-    if (active === panels[which]) return;
+    if (active === panels[which] && active.open) return;
     active?.close();
     active = panels[which];
     active.showModal();
     actions.pauseInput();
-    if (which === 'map' && atlasContext && position) drawMap(atlasContext, position, status);
+    if (which !== 'map') return;
+    if (mapRenderer) renderMap(atlasContext);
+    else if (!mapRequested) {
+      mapRequested = true;
+      import('./map').then(({ drawMap }) => setMapRenderer(drawMap)).catch(() => {
+        mapRequested = false;
+      });
+    }
   }
 
   function openStation(station: Station) {
@@ -99,22 +109,14 @@ export function createInterface(stage: HTMLElement, actions: Actions) {
   }
 
   for (const trigger of panels.map.querySelectorAll<HTMLButtonElement>('[data-travel]')) {
-    trigger.addEventListener('click', () => {
-      const station = stations[Number(trigger.dataset.travel)];
-      if (actions.travel(station)) {
-        panels.map.close();
-        stage.focus({ preventScroll: true });
-      } else {
-        openStation(station);
-      }
-    });
+    trigger.addEventListener('click', () => actions.travel(stations[Number(trigger.dataset.travel)]));
   }
 
   element(stage, '[data-home]').addEventListener('click', event => {
     event.preventDefault();
     actions.home();
   });
-  start.addEventListener('click', actions.start);
+  element(stage, '[data-start]').addEventListener('click', actions.start);
   element(stage, '[data-reset]').addEventListener('click', actions.reset);
   element(stage, '[data-visit]').addEventListener('click', actions.visit);
 
@@ -136,8 +138,6 @@ export function createInterface(stage: HTMLElement, actions: Actions) {
 
   function ready() {
     stage.dataset.world = 'ready';
-    start.disabled = false;
-    start.textContent = 'شروع رانندگی';
     for (const selector of ['[data-stations]', '[data-game-ui]', '[data-touch]']) {
       element<HTMLElement>(stage, selector).hidden = false;
     }
@@ -170,9 +170,22 @@ export function createInterface(stage: HTMLElement, actions: Actions) {
     driveHud.style.setProperty('--speed', (kilometers / 90).toFixed(3));
   }
 
+  function renderMap(context: CanvasRenderingContext2D | null) {
+    if (context) mapRenderer?.(context, position, status);
+  }
+
+  function setMapRenderer(renderer: typeof drawMap) {
+    if (mapRenderer) return;
+    mapRenderer = renderer;
+    mapContext = mapCanvas.getContext('2d');
+    atlasContext = atlasCanvas.getContext('2d');
+    atlas.hidden = !atlasContext;
+    if (active === panels.map) renderMap(atlasContext);
+  }
+
   function updateMap(pose: Point & { heading: number }) {
     position = pose;
-    if (mapContext) drawMap(mapContext, pose, status);
+    renderMap(mapContext);
   }
 
   function updateLabels(project: (x: number, y: number, z: number) => Point2) {
@@ -193,6 +206,7 @@ export function createInterface(stage: HTMLElement, actions: Actions) {
     setExploring,
     setStation,
     setSpeed,
+    setMapRenderer,
     updateMap,
     updateLabels,
     get panel() { return active?.open ? active.dataset.panel as Panel : undefined; },

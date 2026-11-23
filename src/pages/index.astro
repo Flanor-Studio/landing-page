@@ -16,20 +16,23 @@ const description = 'با یک پیکان در جزیرهٔ فلانور ران�
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <meta name="theme-color" content="#32233e" />
     <meta name="description" content={description} />
-    <link rel="icon" href={`${base}flanor.png`} type="image/png" />
+    <link rel="icon" href={`${base}logo.png`} type="image/png" />
     <title>جزیرهٔ فلانور | Flanor Studio</title>
     <noscript><style>.stage { display: none; } .fallback { display: block !important; }</style></noscript>
   </head>
   <body>
     <main>
-      <section class="stage" id="island" aria-label="جزیرهٔ فلانور" tabindex="-1" data-world="loading"
-        style={`--island-poster: url("${base}island.webp")`}>
+      <section class="stage" id="island" aria-label="جزیرهٔ فلانور" tabindex="-1" data-world="idle">
+        <picture class="island-poster" aria-hidden="true">
+          <source media="(max-aspect-ratio: 3/5)" srcset={`${base}island-portrait.webp`} width="480" height="1040" />
+          <img src={`${base}island.webp`} alt="" width="1440" height="900" fetchpriority="high" />
+        </picture>
         <div class="game-view" aria-hidden="true"><canvas data-world-canvas></canvas></div>
         <div class="game-edge" aria-hidden="true"></div>
 
         <header class="topbar">
           <a class="brand" href="#island" data-home aria-label="فلانور استودیو، خانه" dir="ltr">
-            <img src={`${base}flanor.png`} width="46" height="46" alt="" />
+            <img src={`${base}logo.png`} width="46" height="46" alt="" decoding="async" />
             <strong>FLANOR<small>STUDIO</small></strong>
           </a>
           <div class="top-actions">
@@ -48,7 +51,7 @@ const description = 'با یک پیکان در جزیرهٔ فلانور ران�
             <p>با پیکان دور بزن و بازی‌های ما را کشف کن.</p>
           </div>
           <div class="welcome-actions">
-            <button class="drive-start" type="button" data-start disabled>در حال بارگذاری…</button>
+            <button class="drive-start" type="button" data-start>شروع رانندگی</button>
             <a href="#projects" data-open="catalog">دیدن بازی‌ها</a>
           </div>
         </section>
@@ -134,7 +137,7 @@ const description = 'با یک پیکان در جزیرهٔ فلانور ران�
         <div><h2 id="map-title">نقشهٔ جزیره</h2><p>یک ایستگاه را انتخاب کن و به آنجا برو.</p></div>
         <form method="dialog"><button class="close-button" aria-label="بستن" autofocus>×</button></form>
       </header>
-      <div class="atlas" aria-hidden="true">
+      <div class="atlas" aria-hidden="true" hidden>
         <canvas data-atlas width="768" height="500"></canvas><span class="map-n" dir="ltr">N</span>
       </div>
       <div class="panel-list">
@@ -144,6 +147,7 @@ const description = 'با یک پیکان در جزیرهٔ فلانور ران�
           </button>
         ))}
       </div>
+      <p class="map-loading" data-map-loading role="status"></p>
     </dialog>
 
     <dialog class="panel" data-panel="guide" aria-labelledby="guide-title">
@@ -201,20 +205,10 @@ const description = 'با یک پیکان در جزیرهٔ فلانور ران�
     </dialog>
 
     <script>
+      import { initializeLanding } from '../game/landing';
+
       const stage = document.querySelector<HTMLElement>('.stage');
-      if (stage) {
-        const showFallback = () => {
-          stage.dataset.world = 'unavailable';
-          const error = stage.querySelector<HTMLElement>('[data-world-error]');
-          if (error) error.hidden = false;
-        };
-        import('../game/play')
-          .then(({ mountIsland }) => mountIsland(stage, showFallback))
-          .catch(error => {
-            showFallback();
-            console.error('The island could not be loaded.', error);
-          });
-      }
+      if (stage) initializeLanding(stage);
     </script>
   </body>
 </html>
