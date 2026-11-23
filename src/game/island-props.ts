@@ -11,9 +11,17 @@ export async function loadIslandProps() {
   try {
     const { scene } = await new GLTFLoader().loadAsync(propsUrl);
     const glass = new THREE.MeshBasicMaterial({ color: '#ffe1a3', toneMapped: false });
+    const blossoms = ['#e59aa1', '#cf8496', '#edaca6'].map(color => new IslandMaterial({ color }));
     const palette = new Map<THREE.Material, THREE.Material>();
+    let blossom = 0;
     scene.traverse(object => {
       if (!(object instanceof THREE.Mesh)) return;
+      object.castShadow = true;
+      object.receiveShadow = true;
+      if (object.name.startsWith('treeLeaves')) {
+        object.material = blossoms[blossom++ % blossoms.length];
+        return;
+      }
       const source = object.material as THREE.MeshStandardMaterial;
       let material = palette.get(source);
       if (!material) {
@@ -23,8 +31,10 @@ export async function loadIslandProps() {
         palette.set(source, material);
       }
       object.material = material;
-      object.castShadow = material !== glass;
-      object.receiveShadow = material !== glass;
+      if (material === glass) {
+        object.castShadow = false;
+        object.receiveShadow = false;
+      }
     });
     return scene;
   } catch (error) {

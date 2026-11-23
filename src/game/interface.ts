@@ -181,7 +181,8 @@ export function createInterface(stage: HTMLElement, actions: Actions) {
       const visible = x > 75 && x < clientWidth - 75 && y > top && y < clientHeight - 135;
       label.toggleAttribute('data-offscreen', !visible);
       if (visible) {
-        label.style.transform = `translate3d(${Math.round(x)}px, ${Math.round(y)}px,0) translate(-50%,-100%)`;
+        const baseline = Math.max(y, top + label.offsetHeight);
+        label.style.transform = `translate3d(${Math.round(x)}px, ${Math.round(baseline)}px,0) translate(-50%,-100%)`;
         return;
       }
 

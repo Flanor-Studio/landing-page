@@ -54,10 +54,11 @@ export function createScene(canvas: HTMLCanvasElement, props: THREE.Group | unde
 
   function setProjection() {
     const half = viewHeight / 2;
+    const portraitInset = aspect < .84 ? THREE.MathUtils.clamp((760 - height) / 120, 0, 1) * viewHeight * .065 : 0;
     camera.left = -half * aspect;
     camera.right = half * aspect;
-    camera.top = half;
-    camera.bottom = -half;
+    camera.top = half + portraitInset;
+    camera.bottom = -half + portraitInset;
     camera.updateProjectionMatrix();
   }
 
