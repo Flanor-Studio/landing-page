@@ -5,7 +5,7 @@ import { drawMap } from './map';
 import { stations, type Station } from './layout';
 import { createScene } from './scene';
 
-export function mountIsland(stage: HTMLElement, view: ReturnType<typeof createInterface>, showFallback: () => void) {
+export async function mountIsland(stage: HTMLElement, view: ReturnType<typeof createInterface>, showFallback: () => void) {
   const canvas = stage.querySelector<HTMLCanvasElement>('[data-world-canvas]');
   if (!canvas) throw new Error('Missing island canvas');
 
@@ -14,8 +14,7 @@ export function mountIsland(stage: HTMLElement, view: ReturnType<typeof createIn
   const events = new AbortController();
   const { signal } = events;
   const reduced = matchMedia('(prefers-reduced-motion: reduce)');
-  const controls = createControls(stage, () => !view.panel && !document.hidden, signal);
-  let exploring = false;
+  const controls = createControls(stage, () => stage.dataset.world === 'ready' && !view.panel && !document.hidden, signal);
   let station: Station | undefined;
   let frame = 0;
   let last = 0;
@@ -23,21 +22,11 @@ export function mountIsland(stage: HTMLElement, view: ReturnType<typeof createIn
   let mapTime = 0;
   let redraw = true;
 
-  function explore() {
-    if (exploring) return;
-    exploring = true;
-    view.setExploring(true);
-  }
-
-  function reset(home = false) {
+  function reset() {
     controls.clear();
     driving.place();
     game.resetEffects();
     game.restoreScenery();
-    if (home) {
-      exploring = false;
-      view.setExploring(false);
-    }
     updateStation();
     redraw = true;
     view.updateMap(driving.state);
@@ -50,27 +39,27 @@ export function mountIsland(stage: HTMLElement, view: ReturnType<typeof createIn
     view.setStation(station);
   }
 
+  function drawFrame(dt: number) {
+    if (dt > 0) driving.step(dt, controls.read());
+    updateStation();
+    time += dt;
+    view.setSpeed(driving.state.speed);
+    mapTime += dt;
+    if (redraw || mapTime > .085) {
+      view.updateMap(driving.state);
+      mapTime = 0;
+    }
+    game.draw(dt, time, driving.state, station ? stations.indexOf(station) : -1, reduced.matches, redraw);
+    view.updateLabels(game.project);
+    redraw = false;
+  }
+
   function render(timestamp: number) {
     frame = 0;
     if (document.hidden || signal.aborted) return;
     const dt = last ? Math.min(.055, (timestamp - last) / 1000) : 0;
     last = timestamp;
-    if (!view.panel) {
-      const input = controls.read();
-      if (input.throttle || input.jump) explore();
-      if (dt > 0) driving.step(dt, input);
-      updateStation();
-      time += dt;
-      view.setSpeed(driving.state.speed);
-      mapTime += dt;
-      if (redraw || mapTime > .085) {
-        view.updateMap(driving.state);
-        mapTime = 0;
-      }
-      game.draw(dt, time, driving.state, exploring, station ? stations.indexOf(station) : -1, reduced.matches, redraw);
-      view.updateLabels(game.project);
-      redraw = false;
-    }
+    if (!view.panel) drawFrame(dt);
     frame = requestAnimationFrame(render);
   }
 
@@ -112,33 +101,38 @@ export function mountIsland(stage: HTMLElement, view: ReturnType<typeof createIn
   }, { passive: false, signal });
   document.addEventListener('visibilitychange', handleVisibility, { signal });
 
-  canvas.addEventListener('webglcontextlost', () => {
+  function dispose() {
     events.abort();
     resizeObserver.disconnect();
     cancelAnimationFrame(frame);
     controls.clear();
     game.dispose();
-    view.setExploring(false);
-    showFallback();
-  }, { once: true });
+  }
 
-  view.setMapRenderer(drawMap);
-  view.ready();
-  resize();
-  render(performance.now());
+  canvas.addEventListener('webglcontextlost', () => {
+    dispose();
+    view.closePanel();
+    showFallback();
+  }, { once: true, signal });
+
+  try {
+    view.setMapRenderer(drawMap);
+    resize();
+    await game.prepare();
+    signal.throwIfAborted();
+    drawFrame(0);
+    handleVisibility();
+  } catch (cause) {
+    if (!signal.aborted) dispose();
+    throw cause;
+  }
 
   return {
-    start() {
-      explore();
-      if (!view.panel) stage.focus({ preventScroll: true });
-    },
-    home: () => reset(true),
-    reset: () => reset(),
+    reset,
     travel(destination: Station) {
       controls.clear();
       driving.place({ x: destination.x, z: destination.z, heading: destination.heading });
       game.resetEffects();
-      explore();
       updateStation();
       redraw = true;
       view.updateMap(driving.state);

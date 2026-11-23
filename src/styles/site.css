@@ -44,26 +44,66 @@ button, h1, h2, h3, p, dd { margin: 0; }
   background: #655186;
 }
 
-.island-poster, .island-poster img, .game-view, .game-view canvas, .game-edge, .station-labels {
+.game-view, .game-view canvas, .game-edge, .station-labels {
   position: absolute;
   inset: 0;
   width: 100%;
   height: 100%;
 }
 
-.island-poster img { display: block; object-fit: cover; }
 .game-view canvas { display: block; }
 .stage:not([data-world="ready"]) .game-view { visibility: hidden; }
+
+.splash {
+  position: absolute;
+  z-index: 4;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: .85rem;
+  padding: var(--stage-pad);
+  background: radial-gradient(ellipse at center, #634875, #32233e 76%);
+  text-align: center;
+}
+
+.stage[data-world="ready"] .splash,
+.stage[data-world="unavailable"] .splash-status { display: none; }
+
+.splash img {
+  border: 1px solid var(--hud-border);
+  border-radius: 1.3rem;
+  box-shadow: 0 8px 20px #21162c68;
+}
+
+.splash h1 { color: var(--cream); font-size: clamp(1.9rem, 6vw, 3.35rem); line-height: 1.2; }
+.splash-status, .splash-error { color: var(--muted); }
+.splash-status::before {
+  display: inline-block;
+  width: .85rem;
+  aspect-ratio: 1;
+  margin-inline-end: .55rem;
+  border: 2px solid #fff0de42;
+  border-inline-start-color: var(--lime);
+  border-radius: 50%;
+  vertical-align: -.08em;
+  animation: splash-spin .9s linear infinite;
+  content: '';
+}
+
+@keyframes splash-spin { to { transform: rotate(1turn); } }
+
+.splash a { padding: .2rem .1rem; border-bottom: 1px solid var(--hud-border); }
+.splash a:hover { color: var(--lime); }
 
 .game-edge {
   pointer-events: none;
   background:
     linear-gradient(90deg, #4c224e91 0%, #4e244c51 15%, transparent 39%),
     linear-gradient(0deg, #4c244d66, transparent 23%, transparent 87%, #4e244b63);
-  transition: opacity .4s;
+  opacity: .62;
 }
-
-.stage[data-exploring] .game-edge { opacity: .62; }
 
 .topbar {
   position: absolute;
@@ -178,36 +218,7 @@ kbd {
   content: '';
 }
 
-.welcome {
-  position: absolute;
-  z-index: 2;
-  top: clamp(7rem, 20vh, 15rem);
-  left: var(--stage-pad);
-  max-width: min(27rem, 36vw);
-  pointer-events: none;
-  transition: transform .36s ease, opacity .26s ease, visibility .36s;
-}
-
-.stage[data-exploring] .welcome { transform: translateX(-1rem); opacity: 0; visibility: hidden; }
-
-.welcome-copy { text-shadow: 0 2px 16px #321936, 0 1px 2px #321936; }
-
-.welcome h1 {
-  margin-block: .93rem .6rem;
-  color: var(--cream);
-  font-size: clamp(1.9rem, 3.5vw, 3.65rem);
-  font-weight: 850;
-  line-height: 1.14;
-}
-
-.welcome p { margin-block: .65rem 1rem; font-size: clamp(1.02rem, 1.26vw, 1.25rem); font-weight: 550; }
-
-.welcome-actions, .panel-actions { display: flex; align-items: center; flex-wrap: wrap; gap: .5rem .85rem; }
-
-.welcome-actions > * { pointer-events: auto; }
-.welcome-actions a { padding: .4rem 0; border-bottom: 1px solid #f6efdc80; font-size: .96rem; font-weight: 600; }
-.welcome-actions a:hover { color: var(--lime); }
-.stage[data-exploring] .welcome-actions > * { pointer-events: none; }
+.panel-actions { display: flex; align-items: center; flex-wrap: wrap; gap: .5rem .85rem; }
 
 .drive-start {
   display: inline-flex;
@@ -440,7 +451,6 @@ kbd {
 
 .close-button:hover { border-color: var(--lime); }
 .atlas { margin-bottom: 1rem; }
-.map-loading:not(:empty) { margin-top: .75rem; color: var(--muted); }
 .atlas .map-n { top: .75rem; right: .85rem; font-size: .98rem; }
 .panel-list { display: grid; gap: .44rem; }
 
@@ -462,7 +472,8 @@ kbd {
 .panel-list small { color: var(--muted); font-size: .84rem; }
 .panel-actions { margin-top: 1.13rem; }
 .project-links { display: flex; flex-wrap: wrap; gap: .65rem; margin-top: 1rem; }
-.project-links a { display: inline-flex; align-items: center; }
+.project-links a { display: inline-flex; align-items: center; gap: .5rem; }
+.project-links img { width: 1.5rem; height: 1.5rem; object-fit: contain; flex: none; }
 .controls-list { border-block-start: 1px solid var(--hud-border); }
 .controls-list div { display: flex; min-height: 2.38rem; align-items: center; justify-content: space-between; gap: .65rem; padding: .31rem 0; border-bottom: 1px solid var(--hud-border); }
 .controls-list dd { color: var(--muted); }
@@ -483,6 +494,8 @@ kbd {
   border-radius: .75rem;
   background: radial-gradient(ellipse at 50% 80%, color-mix(in srgb, var(--station-color), #274438 31%), #35514a 94%);
 }
+
+.game-icon { width: 7.5rem; height: 7.5rem; object-fit: contain; border-radius: 1rem; }
 
 .project-art i { position: absolute; display: block; inset: 50% auto auto 50%; }
 .project-art[data-theme="puzzle"] i {
@@ -561,14 +574,9 @@ kbd {
 .fallback .project-coming-soon { margin-top: .65rem; }
 .stage[data-world="unavailable"] { height: min(39rem, 83dvh); }
 .stage[data-world="unavailable"] ~ .fallback, .fallback:target { display: block; }
-.stage[data-world="unavailable"] :is([data-open="map"], [data-start], [data-stations], [data-touch], [data-game-ui]) { display: none !important; }
+.stage[data-world="unavailable"] :is([data-game-header], [data-stations], [data-touch], [data-game-ui]) { display: none; }
 
-.world-error { position: absolute; right: var(--stage-pad); bottom: 1.25rem; left: var(--stage-pad); z-index: 3; width: fit-content; padding: .58rem .8rem; border-radius: .55rem; background: var(--hud); }
 .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
-
-@media (max-width: 850px) {
-  .welcome { max-width: 49vw; }
-}
 
 @media (max-width: 760px), (pointer: coarse) {
   .keyboard-hint, .mini-map { display: none; }
@@ -585,10 +593,6 @@ kbd {
 }
 
 @media (max-width: 600px) {
-  .welcome { top: clamp(5rem, 13vh, 7.6rem); max-width: min(86vw, 22rem); }
-  .welcome h1 { margin-block: .45rem .26rem; font-size: clamp(1.95rem, 8.5vw, 3.1rem); }
-  .welcome p { margin-block: .75rem .66rem; }
-  .welcome-actions { gap: .66rem; }
   .top-actions { gap: .36rem; }
   .hud-button { min-height: 2.66rem; padding-inline: .62rem; gap: .35rem; font-size: .85rem; }
   .top-actions kbd, .nearby kbd { display: none; }
@@ -601,13 +605,10 @@ kbd {
 }
 
 @media (max-height: 520px) and (orientation: landscape) {
-  .welcome { top: 5rem; }
-  .welcome h1 { font-size: clamp(1.6rem, 7vh, 2.7rem); }
-  .welcome p { margin-block: .45rem .55rem; }
   .mini-map { width: 7.25rem; }
 }
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { transition-duration: 0s !important; }
-  .coming-soon-tiles i { animation: none; }
+  .splash-status::before, .coming-soon-tiles i { animation: none; }
 }

@@ -3,8 +3,6 @@ import type { Point } from './layout';
 import { spawn, stations, type Station } from './stations';
 
 interface Actions {
-  start(): void;
-  home(): void;
   reset(): void;
   travel(station: Station): void;
   visit(): void;
@@ -21,7 +19,6 @@ export function element<T extends Element>(root: ParentNode, selector: string): 
 }
 
 export function createInterface(stage: HTMLElement, actions: Actions) {
-  const welcome = element<HTMLElement>(stage, '[data-welcome]');
   const speed = element<HTMLOutputElement>(stage, '[data-speed]');
   const count = element<HTMLOutputElement>(stage, '[data-count]');
   const driveHud = element<HTMLElement>(stage, '.drive-hud');
@@ -44,7 +41,6 @@ export function createInterface(stage: HTMLElement, actions: Actions) {
   let mapRenderer: typeof drawMap | undefined;
   let mapContext: CanvasRenderingContext2D | null = null;
   let atlasContext: CanvasRenderingContext2D | null = null;
-  let mapRequested = false;
   let lastStation: Station | undefined;
 
   function open(which: Panel) {
@@ -53,14 +49,7 @@ export function createInterface(stage: HTMLElement, actions: Actions) {
     active = panels[which];
     active.showModal();
     actions.pauseInput();
-    if (which !== 'map') return;
-    if (mapRenderer) renderMap(atlasContext);
-    else if (!mapRequested) {
-      mapRequested = true;
-      import('./map').then(({ drawMap }) => setMapRenderer(drawMap)).catch(() => {
-        mapRequested = false;
-      });
-    }
+    if (which === 'map') renderMap(atlasContext);
   }
 
   function openStation(station: Station) {
@@ -75,7 +64,7 @@ export function createInterface(stage: HTMLElement, actions: Actions) {
     element<HTMLElement>(panel, '[data-project-details]').hidden = comingSoon;
     element<HTMLElement>(panel, '[data-project-coming-soon]').hidden = !comingSoon;
     if (!comingSoon) {
-      element<HTMLElement>(panel, '[data-project-art]').dataset.theme = project.theme;
+      element<HTMLImageElement>(panel, '[data-project-art]').src = `${import.meta.env.BASE_URL.replace(/\/?$/, '/')}icons/${project.id}.png`;
       element<HTMLElement>(panel, '[data-project-english]').textContent = project.english;
       element<HTMLElement>(panel, '[data-project-description]').textContent = project.description;
       for (const links of panel.querySelectorAll<HTMLElement>('[data-project-links]')) {
@@ -114,9 +103,8 @@ export function createInterface(stage: HTMLElement, actions: Actions) {
 
   element(stage, '[data-home]').addEventListener('click', event => {
     event.preventDefault();
-    actions.home();
+    actions.reset();
   });
-  element(stage, '[data-start]').addEventListener('click', actions.start);
   element(stage, '[data-reset]').addEventListener('click', actions.reset);
   element(stage, '[data-visit]').addEventListener('click', actions.visit);
 
@@ -137,15 +125,10 @@ export function createInterface(stage: HTMLElement, actions: Actions) {
   }
 
   function ready() {
-    stage.dataset.world = 'ready';
-    for (const selector of ['[data-stations]', '[data-game-ui]', '[data-touch]']) {
+    for (const selector of ['[data-game-header]', '[data-stations]', '[data-game-ui]', '[data-touch]']) {
       element<HTMLElement>(stage, selector).hidden = false;
     }
-  }
-
-  function setExploring(value: boolean) {
-    stage.toggleAttribute('data-exploring', value);
-    welcome.inert = value;
+    stage.dataset.world = 'ready';
   }
 
   function setStation(station: Station | undefined) {
@@ -203,7 +186,6 @@ export function createInterface(stage: HTMLElement, actions: Actions) {
     open,
     openStation,
     ready,
-    setExploring,
     setStation,
     setSpeed,
     setMapRenderer,

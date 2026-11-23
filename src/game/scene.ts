@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { spawn, type Point } from './layout';
+import type { Point } from './layout';
 import { createPeykan } from './peykan';
 import { createWorld } from './world';
 import { createDust } from './scenery';
@@ -48,8 +48,8 @@ export function createScene(canvas: HTMLCanvasElement) {
 
   let aspect = 1;
   let viewHeight = 52;
-  let width = 1;
-  let height = 1;
+  let width = 0;
+  let height = 0;
   let zoom = 1;
 
   function setProjection() {
@@ -62,30 +62,25 @@ export function createScene(canvas: HTMLCanvasElement) {
   }
 
   function resize(nextWidth: number, nextHeight: number) {
-    width = Math.max(1, nextWidth);
-    height = Math.max(1, nextHeight);
+    nextWidth = Math.max(1, nextWidth);
+    nextHeight = Math.max(1, nextHeight);
+    const pixelRatio = Math.min(devicePixelRatio || 1, 1.5);
+    if (width === nextWidth && height === nextHeight && renderer.getPixelRatio() === pixelRatio) return;
+    width = nextWidth;
+    height = nextHeight;
     aspect = width / height;
-    renderer.setPixelRatio(Math.min(devicePixelRatio || 1, 1.5));
+    renderer.setPixelRatio(pixelRatio);
     renderer.setSize(width, height, false);
     setProjection();
   }
 
-  function draw(dt: number, time: number, pose: VehiclePose, exploring: boolean, nearest: number, reduceMotion: boolean, snap = false) {
-    const narrow = aspect < .84;
-    const framing = narrow ? 31 : 22;
-    const playFraming = narrow ? 29 : 35;
-    if (exploring) {
-      const lead = pose.speed * .13;
-      target.set(pose.x + Math.sin(pose.heading) * lead, 0, pose.z + Math.cos(pose.heading) * lead);
-    } else if (narrow) {
-      target.set(3.3, 0, 11.65);
-    } else {
-      target.set(spawn.x - 1.9, 0, 10.8);
-    }
+  function draw(dt: number, time: number, pose: VehiclePose, nearest: number, reduceMotion: boolean, snap = false) {
+    const lead = pose.speed * .13;
+    target.set(pose.x + Math.sin(pose.heading) * lead, 0, pose.z + Math.cos(pose.heading) * lead);
 
     const response = snap || reduceMotion ? 1 : 1 - Math.exp(-dt * 4.4);
     look.lerp(target, response);
-    const desiredHeight = (exploring ? playFraming : framing) * zoom;
+    const desiredHeight = (aspect < .84 ? 29 : 35) * zoom;
     if (Math.abs(viewHeight - desiredHeight) > .01) {
       viewHeight = THREE.MathUtils.lerp(viewHeight, desiredHeight, response);
       setProjection();
@@ -98,7 +93,7 @@ export function createScene(canvas: HTMLCanvasElement) {
     car.update(dt, pose.speed, pose.steer, pose.braking, pose.height);
     world.breakables.update(dt, reduceMotion);
     world.update(reduceMotion ? 0 : time, nearest, pose, cameraOffset);
-    dust.update(dt, pose, exploring && !reduceMotion);
+    dust.update(dt, pose, !reduceMotion);
     renderer.render(scene, camera);
   }
 
@@ -113,6 +108,7 @@ export function createScene(canvas: HTMLCanvasElement) {
 
   return {
     resize, draw, project, zoomBy,
+    prepare: () => renderer.compileAsync(scene, camera),
     buildings: world.buildings,
     props: world.breakables.props,
     resetEffects: dust.reset,

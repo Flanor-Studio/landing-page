@@ -22,15 +22,18 @@ const description = 'با یک پیکان در جزیرهٔ فلانور ران�
   </head>
   <body>
     <main>
-      <section class="stage" id="island" aria-label="جزیرهٔ فلانور" tabindex="-1" data-world="idle">
-        <picture class="island-poster" aria-hidden="true">
-          <source media="(max-aspect-ratio: 3/5)" srcset={`${base}island-portrait.webp`} width="480" height="1040" />
-          <img src={`${base}island.webp`} alt="" width="1440" height="900" fetchpriority="high" />
-        </picture>
+      <section class="stage" id="island" aria-label="جزیرهٔ فلانور" tabindex="-1" data-world="loading">
+        <div class="splash" data-splash>
+          <img src={`${base}logo.png`} width="72" height="72" alt="" fetchpriority="high" />
+          <h1>جزیرهٔ فلانور</h1>
+          <p class="splash-status" role="status">در حال آماده‌سازی جزیره…</p>
+          <p class="splash-error" data-world-error role="status" hidden>جزیره بارگذاری نشد. بازی‌ها را می‌توانی از فهرست باز کنی.</p>
+          <a href="#projects">دیدن بازی‌ها</a>
+        </div>
         <div class="game-view" aria-hidden="true"><canvas data-world-canvas></canvas></div>
         <div class="game-edge" aria-hidden="true"></div>
 
-        <header class="topbar">
+        <header class="topbar" data-game-header hidden>
           <a class="brand" href="#island" data-home aria-label="فلانور استودیو، خانه" dir="ltr">
             <img src={`${base}logo.png`} width="46" height="46" alt="" decoding="async" />
             <strong>FLANOR<small>STUDIO</small></strong>
@@ -44,17 +47,6 @@ const description = 'با یک پیکان در جزیرهٔ فلانور ران�
             </button>
           </div>
         </header>
-
-        <section class="welcome" data-welcome aria-labelledby="island-title">
-          <div class="welcome-copy">
-            <h1 id="island-title">جزیرهٔ فلانور</h1>
-            <p>با پیکان دور بزن و بازی‌های ما را کشف کن.</p>
-          </div>
-          <div class="welcome-actions">
-            <button class="drive-start" type="button" data-start>شروع رانندگی</button>
-            <a href="#projects" data-open="catalog">دیدن بازی‌ها</a>
-          </div>
-        </section>
 
         <div class="station-labels" data-stations hidden>
           {projects.map((project, index) => (
@@ -109,7 +101,6 @@ const description = 'با یک پیکان در جزیرهٔ فلانور ران�
           </div>
         </div>
         <p class="sr-only" data-announcement role="status"></p>
-        <p class="world-error" data-world-error hidden>نمای سه‌بعدی در این مرورگر در دسترس نیست. بازی‌ها را می‌توانی از فهرست باز کنی.</p>
       </section>
 
       <section class="fallback" id="projects" aria-labelledby="fallback-title">
@@ -121,6 +112,7 @@ const description = 'با یک پیکان در جزیرهٔ فلانور ران�
               <h3>{project.name}</h3>
               {project.status === 'coming-soon' ? <ProjectComingSoon /> : (
                 <>
+                  <img class="game-icon" src={`${base}icons/${project.id}.png`} alt="" width="120" height="120" loading="lazy" />
                   <p class="english" lang="en" dir="ltr">{project.english}</p>
                   <p>{project.description}</p>
                   <ProjectLinks project={project} />
@@ -147,7 +139,6 @@ const description = 'با یک پیکان در جزیرهٔ فلانور ران�
           </button>
         ))}
       </div>
-      <p class="map-loading" data-map-loading role="status"></p>
     </dialog>
 
     <dialog class="panel" data-panel="guide" aria-labelledby="guide-title">
@@ -193,7 +184,7 @@ const description = 'با یک پیکان در جزیرهٔ فلانور ران�
       <ProjectComingSoon inDialog />
       <div data-project-details hidden>
         <div class="project-content">
-          <div data-project-art class="project-art" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></div>
+          <div class="project-art"><img data-project-art class="game-icon" alt="" width="120" height="120" /></div>
           <div><p class="english" lang="en" dir="ltr" data-project-english></p><p data-project-description></p></div>
         </div>
         {projects.map(project => project.status === 'released' && <ProjectLinks project={project} inDialog />)}
@@ -208,7 +199,7 @@ const description = 'با یک پیکان در جزیرهٔ فلانور ران�
       import { initializeLanding } from '../game/landing';
 
       const stage = document.querySelector<HTMLElement>('.stage');
-      if (stage) initializeLanding(stage);
+      if (stage) void initializeLanding(stage);
     </script>
   </body>
 </html>
